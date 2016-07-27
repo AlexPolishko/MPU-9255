@@ -409,22 +409,17 @@ void loop()
     delt_t = millis() - count;
     if (delt_t > 500) { // update LCD once per half-second independent of read rate
 
-    if(SerialDebug) {
-    Serial.print("ax = "); Serial.print((int)1000*ax);  
-    Serial.print(" ay = "); Serial.print((int)1000*ay); 
-    Serial.print(" az = "); Serial.print((int)1000*az); Serial.println(" mg");
-    Serial.print("gx = "); Serial.print( gx, 2); 
-    Serial.print(" gy = "); Serial.print( gy, 2); 
-    Serial.print(" gz = "); Serial.print( gz, 2); Serial.println(" deg/s");
-    Serial.print("mx = "); Serial.print( (int)mx ); 
-    Serial.print(" my = "); Serial.print( (int)my ); 
-    Serial.print(" mz = "); Serial.print( (int)mz ); Serial.println(" mG");
-    
-    Serial.print("q0 = "); Serial.print(q[0]);
-    Serial.print(" qx = "); Serial.print(q[1]); 
-    Serial.print(" qy = "); Serial.print(q[2]); 
-    Serial.print(" qz = "); Serial.println(q[3]); 
-    }               
+ -    Serial.print("ax = "); Serial.print((int)1000*ax);  
+ -     Serial.print("\t"); Serial.print((int)1000*ay); 
+ -     Serial.print("\t"); Serial.print((int)1000*az); 
+ -     Serial.print("\t");
+ -     Serial.print("gx = "); Serial.print( gx, 2); 
+ -     Serial.print("\t");    Serial.print( gy, 2); 
+ -     Serial.print("\t"); Serial.print( gz, 2); Serial.print(" deg/s");
+ -     Serial.print("\t"); Serial.print( (int)mx ); 
+ -     Serial.print("\t"); Serial.print( (int)my ); 
+ -     Serial.print("\t"); Serial.print( (int)mz ); Serial.println(" mG");
+               
     
   // Define output variables from updated quaternion---these are Tait-Bryan angles, commonly used in aircraft orientation.
   // In this coordinate system, the positive z-axis is down toward Earth. 
@@ -444,14 +439,14 @@ void loop()
     roll  *= 180.0f / PI;
      
     if(SerialDebug) {
-    Serial.print("Yaw, Pitch, Roll: ");
+    Serial.print("\t");
     Serial.print(yaw, 2);
-    Serial.print(", ");
+    Serial.print("\t ");
     Serial.print(pitch, 2);
-    Serial.print(", ");
+    Serial.print("\t");
     Serial.println(roll, 2);
     
-    Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
+    //Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
     }
    
   
@@ -798,6 +793,8 @@ void calibrateMPU9250(float * dest1, float * dest2)
   writeByte(MPU9250_ADDRESS, YA_OFFSET_L, data[3]);
   writeByte(MPU9250_ADDRESS, ZA_OFFSET_H, data[4]);
   writeByte(MPU9250_ADDRESS, ZA_OFFSET_L, data[5]);
+
+Serial.println("DATA "+String(data[0])+" "+String(data[1])+" "+String(data[2])+" "+String(data[3])+" "+String(data[4])+" "+String(data[5]));
 
 // Output scaled accelerometer biases for display in the main program
    dest2[0] = (float)accel_bias[0]/(float)accelsensitivity; 
