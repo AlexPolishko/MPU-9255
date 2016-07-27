@@ -288,7 +288,7 @@ void setup()
     Serial.print("y-axis self test: gyration trim within : "); Serial.print(SelfTest[4],1); Serial.println("% of factory value");
     Serial.print("z-axis self test: gyration trim within : "); Serial.print(SelfTest[5],1); Serial.println("% of factory value");
  
- //    calibrateMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
+  //   calibrateMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
    calibrateMPU9250User ();
     delay(1000); 
   
@@ -323,7 +323,7 @@ void setup()
 void loop()
 {  
   // If intPin goes high, all data registers have new data
-  if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {  // On interrupt, check if data ready interrupt
+ // if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {  // On interrupt, check if data ready interrupt
     readAccelData(accelCount);  // Read the x/y/z adc values
     getAres();
     
@@ -351,7 +351,7 @@ void loop()
     mx = (float)magCount[0]*mRes*magCalibration[0] - magbias[0];  // get actual magnetometer value, this depends on scale being set
     my = (float)magCount[1]*mRes*magCalibration[1] - magbias[1];  
     mz = (float)magCount[2]*mRes*magCalibration[2] - magbias[2];   
-  }
+  //}
   //else   Serial.println("No data");
   Now = micros();
   deltat = ((Now - lastUpdate)/1000000.0f); // set integration time by time elapsed since last filter update
@@ -653,7 +653,7 @@ void initMPU9250()
 void calibrateMPU9250User()
 {
   uint8_t data[12]={0,36,255,235,0,10};
-  uint8_t dataa[12]={235,237,28,134,34,23};
+  uint8_t dataa[12]={236,157,28,114,34,203};
   
   // Push gyro biases to hardware registers
   writeByte(MPU9250_ADDRESS, XG_OFFSET_H, data[0]);
