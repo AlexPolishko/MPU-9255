@@ -288,8 +288,8 @@ void setup()
     Serial.print("y-axis self test: gyration trim within : "); Serial.print(SelfTest[4],1); Serial.println("% of factory value");
     Serial.print("z-axis self test: gyration trim within : "); Serial.print(SelfTest[5],1); Serial.println("% of factory value");
  
-   // calibrateMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
-  
+ //    calibrateMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
+   calibrateMPU9250User ();
     delay(1000); 
   
     initMPU9250(); 
@@ -300,7 +300,6 @@ void setup()
     Serial.print("AK8963 "); Serial.print("I AM "); Serial.print(d, HEX); Serial.print(" I should be "); Serial.println(0x48, HEX);
   
     delay(1000); 
-  
     // Get magnetometer calibration from AK8963 ROM
     initAK8963(magCalibration); Serial.println("AK8963 initialized for active data mode...."); // Initialize device for active mode read of magnetometer
   
@@ -651,7 +650,27 @@ void initMPU9250()
    delay(100);
 }
 
+void calibrateMPU9250User()
+{
+  uint8_t data[12]={0,36,255,235,0,10};
+  uint8_t dataa[12]={235,237,28,134,34,23};
+  
+  // Push gyro biases to hardware registers
+  writeByte(MPU9250_ADDRESS, XG_OFFSET_H, data[0]);
+  writeByte(MPU9250_ADDRESS, XG_OFFSET_L, data[1]);
+  writeByte(MPU9250_ADDRESS, YG_OFFSET_H, data[2]);
+  writeByte(MPU9250_ADDRESS, YG_OFFSET_L, data[3]);
+  writeByte(MPU9250_ADDRESS, ZG_OFFSET_H, data[4]);
+  writeByte(MPU9250_ADDRESS, ZG_OFFSET_L, data[5]);
 
+  
+  writeByte(MPU9250_ADDRESS, XA_OFFSET_H, dataa[0]);
+  writeByte(MPU9250_ADDRESS, XA_OFFSET_L, dataa[1]);
+  writeByte(MPU9250_ADDRESS, YA_OFFSET_H, dataa[2]);
+  writeByte(MPU9250_ADDRESS, YA_OFFSET_L, dataa[3]);
+  writeByte(MPU9250_ADDRESS, ZA_OFFSET_H, dataa[4]);
+  writeByte(MPU9250_ADDRESS, ZA_OFFSET_L, dataa[5]);
+}
 // Function which accumulates gyro and accelerometer data after device initialization. It calculates the average
 // of the at-rest readings and then loads the resulting offsets into accelerometer and gyro bias registers.
 void calibrateMPU9250(float * dest1, float * dest2)
@@ -742,7 +761,7 @@ void calibrateMPU9250(float * dest1, float * dest2)
   writeByte(MPU9250_ADDRESS, YG_OFFSET_L, data[3]);
   writeByte(MPU9250_ADDRESS, ZG_OFFSET_H, data[4]);
   writeByte(MPU9250_ADDRESS, ZG_OFFSET_L, data[5]);
-  
+  Serial.print("GYRO OFFSET "+String(data[0])+" "+String(data[1])+" "+String(data[2])+" "+String(data[3])+" "+String(data[4])+" "+String(data[5])+" ");
 // Output scaled gyro biases for display in the main program
   dest1[0] = (float) gyro_bias[0]/(float) gyrosensitivity;  
   dest1[1] = (float) gyro_bias[1]/(float) gyrosensitivity;
@@ -794,7 +813,7 @@ void calibrateMPU9250(float * dest1, float * dest2)
   writeByte(MPU9250_ADDRESS, ZA_OFFSET_H, data[4]);
   writeByte(MPU9250_ADDRESS, ZA_OFFSET_L, data[5]);
 
-Serial.println("DATA "+String(data[0])+" "+String(data[1])+" "+String(data[2])+" "+String(data[3])+" "+String(data[4])+" "+String(data[5]));
+Serial.println("ACC DATA "+String(data[0])+" "+String(data[1])+" "+String(data[2])+" "+String(data[3])+" "+String(data[4])+" "+String(data[5]));
 
 // Output scaled accelerometer biases for display in the main program
    dest2[0] = (float)accel_bias[0]/(float)accelsensitivity; 
