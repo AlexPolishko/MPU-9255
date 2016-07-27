@@ -378,18 +378,21 @@ void loop()
 
     if(SerialDebug) {
     // Print acceleration values in milligs!
-   Serial.print("ax = "); Serial.print((int)1000*ax);  
-    Serial.print("\t"); Serial.print((int)1000*ay); 
-    Serial.print("\t"); Serial.print((int)1000*az); 
-    Serial.print("\t");
-    Serial.print("gx = "); Serial.print( gx, 2); 
-    Serial.print("\t");    Serial.print( gy, 2); 
-    Serial.print("\t"); Serial.print( gz, 2); Serial.print(" deg/s");
-    Serial.print("\t"); Serial.print( (int)mx ); 
-    Serial.print("\t"); Serial.print( (int)my ); 
-    Serial.print("\t"); Serial.print( (int)mz ); Serial.println(" mG");
+    Serial.print("X-acceleration: "); Serial.print(1000*ax); Serial.print(" mg ");
+    Serial.print("Y-acceleration: "); Serial.print(1000*ay); Serial.print(" mg ");
+    Serial.print("Z-acceleration: "); Serial.print(1000*az); Serial.println(" mg ");
+ 
+    // Print gyro values in degree/sec
+    Serial.print("X-gyro rate: "); Serial.print(gx, 3); Serial.print(" degrees/sec "); 
+    Serial.print("Y-gyro rate: "); Serial.print(gy, 3); Serial.print(" degrees/sec "); 
+    Serial.print("Z-gyro rate: "); Serial.print(gz, 3); Serial.println(" degrees/sec"); 
     
-     tempCount = readTempData();  // Read the adc values
+    // Print mag values in degree/sec
+    Serial.print("X-mag field: "); Serial.print(mx); Serial.print(" mG "); 
+    Serial.print("Y-mag field: "); Serial.print(my); Serial.print(" mG "); 
+    Serial.print("Z-mag field: "); Serial.print(mz); Serial.println(" mG"); 
+ 
+    tempCount = readTempData();  // Read the adc values
     temperature = ((float) tempCount) / 333.87 + 21.0; // Temperature in degrees Centigrade
    // Print temperature in degrees Centigrade      
     Serial.print("Temperature is ");  Serial.print(temperature, 1);  Serial.println(" degrees C"); // Print T values to tenths of s degree C
