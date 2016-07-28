@@ -307,13 +307,14 @@ void setup()
     initAK8963(magCalibration); Serial.println("AK8963 initialized for active data mode...."); // Initialize device for active mode read of magnetometer
 
 //  magcalMPU9250(magBias, magScale);
-magBias[0] = -168.59;
-magBias[1] = 62.1;
-magBias[2] = -319.82;
 
-magScale[0] = 0.84;
-magScale[1] = 1.1;
-magScale[2] = 1.1;
+magBias[0] = -115.35;
+magBias[1] = 17.75;
+magBias[2] = -395.07;
+
+magScale[0] = 0.99;
+magScale[1] = 1.02;
+magScale[2] = 0.98;
 
   Serial.println("AK8963 mag biases (mG) "); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]); 
   Serial.println("AK8963 mag scale (mG) "); Serial.println(magScale[0]); Serial.println(magScale[1]); Serial.println(magScale[2]); 
@@ -450,7 +451,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
  -     Serial.print("\t");    Serial.print( gy, 2); 
  -     Serial.print("\t"); Serial.print( gz, 2); Serial.print(" deg/s");
  
- -     */Serial.print("\t"); Serial.print( (int)magCount[0] ); 
+ -     Serial.print("\t"); Serial.print( (int)magCount[0] ); 
  -     Serial.print("\t"); Serial.print( (int)magCount[1] ); 
  -     Serial.print("\t"); Serial.print( (int)magCount[2] ); Serial.print(" raw ");
  
@@ -458,9 +459,10 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
  -     Serial.print("\t"); Serial.print( (int)my ); 
  -     Serial.print("\t"); Serial.print( (int)mz ); 
  -     Serial.print("\t"); Serial.print( atan2(my, mx)*180/PI ); 
+ -     Serial.print("\t"); Serial.print( atan2(my, mx)*180/PI ); 
  
  Serial.println(" mG");
-               
+       */        
     
   // Define output variables from updated quaternion---these are Tait-Bryan angles, commonly used in aircraft orientation.
   // In this coordinate system, the positive z-axis is down toward Earth. 
@@ -478,7 +480,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     yaw   *= 180.0f / PI; 
     yaw   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
     roll  *= 180.0f / PI;
-/*     
+     
     if(SerialDebug) {
     Serial.print("\t");
     Serial.print(yaw, 2);
@@ -490,7 +492,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     //Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
     }
    
-  */
+  
     // With these settings the filter is updating at a ~145 Hz rate using the Madgwick scheme and 
     // >200 Hz using the Mahony scheme even though the display refreshes at only 2 Hz.
     // The filter update rate is determined mostly by the mathematical steps in the respective algorithms, 
@@ -1279,10 +1281,12 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
   delay(4000);
   
     // shoot for ~fifteen seconds of mag data
-    if(Mmode == 0x02) sample_count = 128;  // at 8 Hz ODR, new mag data is available every 125 ms
+    if(Mmode == 0x02) sample_count = 528;  // at 8 Hz ODR, new mag data is available every 125 ms
     if(Mmode == 0x06) sample_count = 1500;  // at 100 Hz ODR, new mag data is available every 10 ms
    for(ii = 0; ii < sample_count; ii++) {
+    
     readMagData(mag_temp);  // Read the mag data   
+    Serial.println(mag_temp[0]);
     for (int jj = 0; jj < 3; jj++) {
       if(mag_temp[jj] > mag_max[jj]) mag_max[jj] = mag_temp[jj];
       if(mag_temp[jj] < mag_min[jj]) mag_min[jj] = mag_temp[jj];
