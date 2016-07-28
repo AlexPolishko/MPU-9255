@@ -306,9 +306,17 @@ void setup()
     // Get magnetometer calibration from AK8963 ROM
     initAK8963(magCalibration); Serial.println("AK8963 initialized for active data mode...."); // Initialize device for active mode read of magnetometer
 
-  magcalMPU9250(magBias, magScale);
-  Serial.println("AK8963 mag biases (mG)"); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]); 
-  Serial.println("AK8963 mag scale (mG)"); Serial.println(magScale[0]); Serial.println(magScale[1]); Serial.println(magScale[2]); 
+//  magcalMPU9250(magBias, magScale);
+magBias[0] = -168.59;
+magBias[1] = 62.1;
+magBias[2] = -319.82;
+
+magScale[0] = 0.84;
+magScale[1] = 1.1;
+magScale[2] = 1.1;
+
+  Serial.println("AK8963 mag biases (mG) "); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]); 
+  Serial.println("AK8963 mag scale (mG) "); Serial.println(magScale[0]); Serial.println(magScale[1]); Serial.println(magScale[2]); 
 
   
   if(SerialDebug) {
@@ -357,6 +365,7 @@ void loop()
       mx *= magScale[0];
       my *= magScale[1];
       mz *= magScale[2]; 
+
   //}
   //else   Serial.println("No data");
   Now = micros();
@@ -384,7 +393,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     yaw   *= 180.0f / PI; 
    // yaw   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
     roll  *= 180.0f / PI;
-    Serial.print("\t");
+  /*  Serial.print("\t");
     Serial.print(yaw, 2);
     Serial.print("\t ");
     Serial.print(pitch, 2);
@@ -392,7 +401,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     Serial.print(roll, 2);
     Serial.print("\t");
     Serial.println(millis());
-    
+    */
 
 
 
@@ -440,11 +449,19 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
  -     Serial.print("gx = "); Serial.print( gx, 2); 
  -     Serial.print("\t");    Serial.print( gy, 2); 
  -     Serial.print("\t"); Serial.print( gz, 2); Serial.print(" deg/s");
- -     Serial.print("\t"); Serial.print( (int)mx ); 
+ 
+ -     */Serial.print("\t"); Serial.print( (int)magCount[0] ); 
+ -     Serial.print("\t"); Serial.print( (int)magCount[1] ); 
+ -     Serial.print("\t"); Serial.print( (int)magCount[2] ); Serial.print(" raw ");
+ 
+ -    Serial.print("\t"); Serial.print( (int)mx ); 
  -     Serial.print("\t"); Serial.print( (int)my ); 
- -     Serial.print("\t"); Serial.print( (int)mz ); Serial.println(" mG");
+ -     Serial.print("\t"); Serial.print( (int)mz ); 
+ -     Serial.print("\t"); Serial.print( atan2(my, mx)*180/PI ); 
+ 
+ Serial.println(" mG");
                
-  */  
+    
   // Define output variables from updated quaternion---these are Tait-Bryan angles, commonly used in aircraft orientation.
   // In this coordinate system, the positive z-axis is down toward Earth. 
   // Yaw is the angle between Sensor x-axis and Earth magnetic North (or true North if corrected for local declination, looking down on the sensor positive yaw is counterclockwise.
@@ -461,7 +478,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     yaw   *= 180.0f / PI; 
     yaw   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
     roll  *= 180.0f / PI;
-     
+/*     
     if(SerialDebug) {
     Serial.print("\t");
     Serial.print(yaw, 2);
@@ -473,7 +490,7 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     //Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
     }
    
-  
+  */
     // With these settings the filter is updating at a ~145 Hz rate using the Madgwick scheme and 
     // >200 Hz using the Mahony scheme even though the display refreshes at only 2 Hz.
     // The filter update rate is determined mostly by the mathematical steps in the respective algorithms, 
@@ -679,7 +696,13 @@ void calibrateMPU9250User()
 {
   uint8_t data[12]={0,36,255,235,0,10};
   uint8_t dataa[12]={236,157,28,114,34,203};
-  
+  magBias[0] = -117.13;
+magBias[1] =42.59;
+magBias[2] =-323.24;
+magScale[0] = 0.78;
+magScale[1] = 1.06;
+magScale[2] = 1.30;
+
   // Push gyro biases to hardware registers
   writeByte(MPU9250_ADDRESS, XG_OFFSET_H, data[0]);
   writeByte(MPU9250_ADDRESS, XG_OFFSET_L, data[1]);
@@ -1248,8 +1271,9 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
         void magcalMPU9250(float * dest1, float * dest2) 
 {
   uint16_t ii = 0, sample_count = 0;
-  int32_t mag_bias[3] = {0, 0, 0}, mag_scale[3] = {0, 0, 0};
   int16_t mag_max[3] = {0x8000, 0x8000, 0x8000}, mag_min[3] = {0x7FFF, 0x7FFF, 0x7FFF}, mag_temp[3] = {0, 0, 0};
+    int32_t mag_bias[3] = {0, 0, 0}, mag_scale[3] = {0, 0, 0};
+
  getMres();
   Serial.println("Mag Calibration: Wave device in a figure eight until done!");
   delay(4000);
@@ -1267,15 +1291,15 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
     if(Mmode == 0x06) delay(12);  // at 100 Hz ODR, new mag data is available every 10 ms
     }
 
-//    Serial.println("mag x min/max:"); Serial.println(mag_max[0]); Serial.println(mag_min[0]);
-//    Serial.println("mag y min/max:"); Serial.println(mag_max[1]); Serial.println(mag_min[1]);
-//    Serial.println("mag z min/max:"); Serial.println(mag_max[2]); Serial.println(mag_min[2]);
+    Serial.println("mag x min/max:"); Serial.println(mag_max[0]); Serial.println(mag_min[0]);
+    Serial.println("mag y min/max:"); Serial.println(mag_max[1]); Serial.println(mag_min[1]);
+    Serial.println("mag z min/max:"); Serial.println(mag_max[2]); Serial.println(mag_min[2]);
 
     // Get hard iron correction
     mag_bias[0]  = (mag_max[0] + mag_min[0])/2;  // get average x mag bias in counts
     mag_bias[1]  = (mag_max[1] + mag_min[1])/2;  // get average y mag bias in counts
     mag_bias[2]  = (mag_max[2] + mag_min[2])/2;  // get average z mag bias in counts
-    
+    Serial.println("mRes = :"+String(mRes));
     dest1[0] = (float) mag_bias[0]*mRes*magCalibration[0];  // save mag biases in G for main program
     dest1[1] = (float) mag_bias[1]*mRes*magCalibration[1];   
     dest1[2] = (float) mag_bias[2]*mRes*magCalibration[2];  
@@ -1286,6 +1310,8 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
     mag_scale[2]  = (mag_max[2] - mag_min[2])/2;  // get average z axis max chord length in counts
 
 Serial.print(String(mag_max[0])+" min "+String(mag_min[0])+" bias "+String(mag_bias[0])+" scale "+String(mag_scale[0]));
+Serial.print(String(mag_max[1])+" min "+String(mag_min[1])+" bias "+String(mag_bias[1])+" scale "+String(mag_scale[1]));
+Serial.print(String(mag_max[2])+" min "+String(mag_min[2])+" bias "+String(mag_bias[2])+" scale "+String(mag_scale[2]));
 
     float avg_rad = mag_scale[0] + mag_scale[1] + mag_scale[2];
     avg_rad /= 3.0;
