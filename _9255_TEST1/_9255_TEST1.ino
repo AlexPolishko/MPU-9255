@@ -27,6 +27,7 @@
  */
 #include <SPI.h>
 #include <Wire.h>   
+#include <Bounce.h>
 
 
 // See also MPU-9250 Register Map and Descriptions, Revision 4.0, RM-MPU-9250A-00, Rev. 1.4, 9/9/2013 for registers not listed in 
@@ -178,15 +179,14 @@
 #define ZA_OFFSET_H      0x7D
 #define ZA_OFFSET_L      0x7E
 
+#define BUTTON1 11
+#define BUTTON2 12
+
 // Using the MSENSR-9250 breakout board, ADO is set to 0 
 // Seven-bit device address is 110100 for ADO = 0 and 110101 for ADO = 1
-#define ADO 1
-#if ADO
-#define MPU9250_ADDRESS 0x69  // Device address when ADO = 1
-#else
-#define MPU9250_ADDRESS 0x68  // Device address when ADO = 0
+
+byte MPU9250_ADDRESS = 0x68;  // Device address when ADO = 0
 #define AK8963_ADDRESS 0x0C   //  Address of magnetometer
-#endif  
 
 #define AHRS true         // set to false for basic data read
 #define SerialDebug true   // set to true to get Serial output for debugging
@@ -210,6 +210,9 @@ enum Mscale {
   MFS_14BITS = 0, // 0.6 mG per LSB
   MFS_16BITS      // 0.15 mG per LSB
 };
+
+Bounce button1 = Bounce(BUTTON1,5); 
+Bounce button2 = Bounce(BUTTON2,5); 
 
 // Specify sensor full scale
 uint8_t Gscale = GFS_250DPS;
@@ -261,10 +264,24 @@ float ax, ay, az, gx, gy, gz, mx, my, mz; // variables to hold latest sensor dat
 float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};    // vector to hold quaternion
 float eInt[3] = {0.0f, 0.0f, 0.0f};       // vector to hold integral error for Mahony method
 
+int buttons[2];
+
 
 void setup()
 {
+  
+    pinMode(BUTTON1,INPUT);
+    pinMode(BUTTON2,INPUT);
+   
   Wire.begin();
+
+    Wire.beginTransmission(MPU9250_ADDRESS);
+byte    error = Wire.endTransmission();
+ 
+    if (error != 0)
+    {
+      MPU9250_ADDRESS++;
+      }
 //  TWBR = 12;  // 400 kbit/sec I2C speed
   Serial.begin(115200);
   
@@ -367,8 +384,6 @@ void loop()
       my *= magScale[1];
       mz *= magScale[2]; 
 
-  //}
-  //else   Serial.println("No data");
   Now = micros();
   deltat = ((Now - lastUpdate)/1000000.0f); // set integration time by time elapsed since last filter update
   lastUpdate = Now;
@@ -387,7 +402,7 @@ void loop()
 //  MahonyQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f, my, mx, mz);
   MadgwickQuaternionUpdate(ax, ay, az, gx*PI/180.0f, gy*PI/180.0f, gz*PI/180.0f);
 
-yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
+  /*yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3]);   
     pitch = -asin(2.0f * (q[1] * q[3] - q[0] * q[2]));
     roll  = atan2(2.0f * (q[0] * q[1] + q[2] * q[3]), q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]);
     pitch *= 180.0f / PI;
@@ -403,66 +418,6 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     Serial.print("\t");
     Serial.println(millis());
     */
-
-
-
-    if (!AHRS) {
-    delt_t = millis() - count;
-    if(delt_t > 500) {
-
-    if(SerialDebug) {
-    // Print acceleration values in milligs!
-    Serial.print("X-acceleration: "); Serial.print(1000*ax); Serial.print(" mg ");
-    Serial.print("Y-acceleration: "); Serial.print(1000*ay); Serial.print(" mg ");
-    Serial.print("Z-acceleration: "); Serial.print(1000*az); Serial.println(" mg ");
- 
-    // Print gyro values in degree/sec
-    Serial.print("X-gyro rate: "); Serial.print(gx, 3); Serial.print(" degrees/sec "); 
-    Serial.print("Y-gyro rate: "); Serial.print(gy, 3); Serial.print(" degrees/sec "); 
-    Serial.print("Z-gyro rate: "); Serial.print(gz, 3); Serial.println(" degrees/sec"); 
-    
-    // Print mag values in degree/sec
-    Serial.print("X-mag field: "); Serial.print(mx); Serial.print(" mG "); 
-    Serial.print("Y-mag field: "); Serial.print(my); Serial.print(" mG "); 
-    Serial.print("Z-mag field: "); Serial.print(mz); Serial.println(" mG"); 
- 
-    tempCount = readTempData();  // Read the adc values
-    temperature = ((float) tempCount) / 333.87 + 21.0; // Temperature in degrees Centigrade
-   // Print temperature in degrees Centigrade      
-    Serial.print("Temperature is ");  Serial.print(temperature, 1);  Serial.println(" degrees C"); // Print T values to tenths of s degree C
-    }
-    
-    
-    count = millis();
-    digitalWrite(myLed, !digitalRead(myLed));  // toggle led
-    }
-    }
-    else {
-      
-    // Serial print and/or display at 0.5 s rate independent of data rates
-    delt_t = millis() - count;
-    if (delt_t > 500) { // update LCD once per half-second independent of read rate
-/*
- -    Serial.print("ax = "); Serial.print((int)1000*ax);  
- -     Serial.print("\t"); Serial.print((int)1000*ay); 
- -     Serial.print("\t"); Serial.print((int)1000*az); 
- -     Serial.print("\t");
- -     Serial.print("gx = "); Serial.print( gx, 2); 
- -     Serial.print("\t");    Serial.print( gy, 2); 
- -     Serial.print("\t"); Serial.print( gz, 2); Serial.print(" deg/s");
- 
- -     Serial.print("\t"); Serial.print( (int)magCount[0] ); 
- -     Serial.print("\t"); Serial.print( (int)magCount[1] ); 
- -     Serial.print("\t"); Serial.print( (int)magCount[2] ); Serial.print(" raw ");
- 
- -    Serial.print("\t"); Serial.print( (int)mx ); 
- -     Serial.print("\t"); Serial.print( (int)my ); 
- -     Serial.print("\t"); Serial.print( (int)mz ); 
- -     Serial.print("\t"); Serial.print( atan2(my, mx)*180/PI ); 
- -     Serial.print("\t"); Serial.print( atan2(my, mx)*180/PI ); 
- 
- Serial.println(" mG");
-       */        
     
   // Define output variables from updated quaternion---these are Tait-Bryan angles, commonly used in aircraft orientation.
   // In this coordinate system, the positive z-axis is down toward Earth. 
@@ -480,19 +435,48 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     yaw   *= 180.0f / PI; 
     yaw   -= 13.8; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
     roll  *= 180.0f / PI;
-     
-    if(SerialDebug) {
+     /*
     Serial.print("\t");
     Serial.print(yaw, 2);
     Serial.print("\t ");
     Serial.print(pitch, 2);
     Serial.print("\t");
     Serial.println(roll, 2);
-    
-    //Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
+
+*/
+    if ( button1.update() ) {
+      if ( button1.read() == HIGH)
+        buttons[0] = true;
+      else
+        buttons[0] = false;
     }
-   
-  
+
+    if ( button2.update() ) {
+      if ( button2.read() == HIGH)
+        buttons[1] = true;
+      else
+        buttons[1] = false;
+    }
+    
+           short qw,qx,qy,qz;
+           
+           qx=q[0]*10000;
+           qy=q[1]*10000;
+           qz=q[2]*10000;
+           qw=q[3]*10000;
+           qw=qw*2;
+           qx=qx*2;
+           qy=qy*2;
+           qz=qz*2;
+           byte but = buttons[0]*128+buttons[1]*64+63;
+           byte StopByte = 255;
+           
+          byte bytearray[10] = {StopByte,but,lowByte(qx),highByte(qx),lowByte(qy),highByte(qy),lowByte(qz),highByte(qz),lowByte(qw),highByte(qw)};
+          Serial.write(bytearray,10);
+
+     //     Serial.println(String(qw) + ";" + String(qx) + ";" + String(qy) + ";" + String(qz) + ";" + String(but) + ";" +String(millis()));
+
+    
     // With these settings the filter is updating at a ~145 Hz rate using the Madgwick scheme and 
     // >200 Hz using the Mahony scheme even though the display refreshes at only 2 Hz.
     // The filter update rate is determined mostly by the mathematical steps in the respective algorithms, 
@@ -508,8 +492,6 @@ yaw   = atan2(2.0f * (q[1] * q[2] + q[0] * q[3]), q[0] * q[0] + q[1] * q[1] - q[
     count = millis(); 
     sumCount = 0;
     sum = 0;    
-    }
-    }
 
 }
 
