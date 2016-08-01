@@ -8,13 +8,16 @@
 
 MPU6050 mpu;
 
+#define PLATE_1  // FIRST GYRO + BIG PLATE
+//#define PLATE_2 // ACCURATE GYRO + Little plate
+
 //#define HELLO_WORLD
-//#define FAST_MODE
+#define FAST_MODE
 //#define READ_MODE
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
 //#define OUTPUT_READABLE_YAWPITCHROLL
-#define OUTPUT_READABLE_WORLDACCEL
+//#define OUTPUT_READABLE_WORLDACCEL
 
 #define LED_PIN 13
 bool blinkState = false;
@@ -63,16 +66,15 @@ void setup() {
     mpu.initialize();
     devStatus = mpu.dmpInitialize();
  
-      // V2 - big plate
-     mpu.setXGyroOffset(58);
-    mpu.setYGyroOffset(-33);
-    mpu.setZGyroOffset(12);
-
-    mpu.setXAccelOffset(-1224);
-    mpu.setYAccelOffset(-1095);
-    mpu.setZAccelOffset(2204);
-
-
+   #ifdef PLATE_1
+      mpu.setXGyroOffset(58);
+      mpu.setYGyroOffset(-33);
+      mpu.setZGyroOffset(12);
+   // mpu.setXAccelOffset(-1224);
+  //  mpu.setYAccelOffset(-1095);
+  //  mpu.setZAccelOffset(2204);
+      mpu.setZAccelOffset(1334);
+  #endif
    
       // V2
   /*    mpu.setXGyroOffset(10);
