@@ -8,11 +8,22 @@
 
 MPU6050 mpu;
 
-#define PLATE_1  // FIRST GYRO + BIG PLATE
-//#define PLATE_2 // ACCURATE GYRO + Little plate
+//#define PLATE_1  // FIRST GYRO + BIG PLATE
+#define PLATE_2 // ACCURATE GYRO + Little plate
 
 //#define HELLO_WORLD
-#define FAST_MODE
+//#define FAST_MODE
+   #ifdef PLATE_1
+      mpu.setXGyroOffset(58);
+      mpu.setYGyroOffset(-33);
+      mpu.setZGyroOffset(12);
+   // mpu.setXAccelOffset(-1224);
+  //  mpu.setYAccelOffset(-1095);
+  //  mpu.setZAccelOffset(2204);
+      mpu.setZAccelOffset(1334);
+  #endif
+#define FAST_MODE_ACCEL
+//#define TIMER_MODE
 //#define READ_MODE
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
@@ -28,7 +39,10 @@ Bounce button1 = Bounce(BUTTON1,5);
 Bounce button2 = Bounce(BUTTON2,5); 
 
 int buttons[2];
-
+#ifdef TIMER_MODE
+  unsigned long timer1;
+  byte buf[4];  
+#endif
 bool dmpReady = false;
 uint8_t mpuIntStatus;
 uint8_t devStatus;
@@ -75,7 +89,16 @@ void setup() {
   //  mpu.setZAccelOffset(2204);
       mpu.setZAccelOffset(1334);
   #endif
-   
+//   -387 -3354 1645  14  -4  37
+   #ifdef PLATE_2
+      mpu.setXGyroOffset(14);
+      mpu.setYGyroOffset(-4);
+      mpu.setZGyroOffset(37);
+    mpu.setXAccelOffset(-387);
+    mpu.setYAccelOffset(-3354);
+      mpu.setZAccelOffset(1645);
+  #endif
+
       // V2
   /*    mpu.setXGyroOffset(10);
     mpu.setYGyroOffset(-2);
@@ -103,7 +126,7 @@ void setup() {
     }
     pinMode(LED_PIN, OUTPUT);
 }
-short qw,qx,qy,qz;
+short qw,qx,qy,qz,ax,ay,az;
            
 void loop() {
     if (!dmpReady) return;
@@ -147,8 +170,21 @@ void loop() {
           
         #endif
 
-        
-        #ifdef FAST_MODE
+
+        #ifdef TIMER_MODE
+          timer1 =millis();
+          buf[0] = (byte) timer1;
+`          buf[1] = (byte) (timer1 >> 8);
+          buf[2] = (byte) (timer1 >> 16);
+          buf[3] = (byte) (timer1 >> 24);
+           byte but = buttons[0]*128+buttons[1]*64+63;
+           byte StopByte = 255;
+          byte bytearray[10] = {StopByte,but,buf[0],buf[1],buf[2],buf[3],buf[3],buf[2],buf[1],buf[0]};
+          Serial.write(bytearray,10);    
+         // Serial.println("Hello "+String(buf[1])+" "+String(buf[0]));
+        #endif
+
+      #ifdef FAST_MODE
             mpu.dmpGetQuaternion(&q, fifoBuffer);
            qw=q.w*10000;
            qx=q.x*10000;
@@ -164,10 +200,36 @@ void loop() {
           Serial.write(bytearray,10);
         #endif
 
+        
+        #ifdef FAST_MODE_ACCEL
+            mpu.dmpGetQuaternion(&q, fifoBuffer);
+           qw=q.w*10000;
+           qx=q.x*10000;
+           qy=q.y*10000;
+           qz=q.z*10000;
+           qw=qw*2;
+           qx=qx*2;
+           qy=qy*2;
+           qz=qz*2;
+           byte but = buttons[0]*128+buttons[1]*64+63;
+           byte StopByte = 255;
+           mpu.dmpGetAccel(&aa, fifoBuffer);
+             ax = aa.x;
+             ay = aa.y;
+             az = aa.z;
+          byte bytearray[16] = {StopByte,but,lowByte(qx),highByte(qx),lowByte(qy),highByte(qy),lowByte(qz),highByte(qz),lowByte(qw),highByte(qw),lowByte(ax),highByte(ax),lowByte(ay),highByte(ay),lowByte(az),highByte(az)};
+          Serial.write(bytearray,16);
+        #endif
+
          #ifdef READ_MODE
               mpu.dmpGetQuaternion(&q, fifoBuffer);
               mpu.dmpGetEuler(euler, &q);
-              Serial.println("Hello! "+String(euler[0] * 180/M_PI) + "," + String(euler[1] * 180/M_PI) + "," + String(euler[2] * 180/M_PI));
+              
+               mpu.dmpGetAccel(&aa, fifoBuffer);
+             ax = aa.x;
+             ay = aa.y;
+             az = aa.z;
+              Serial.println("Hello! "+String(euler[0] * 180/M_PI) + "," + String(euler[1] * 180/M_PI) + "," + String(euler[2] * 180/M_PI)+" ac ="+String(ax)+" "+String(ay)+" "+String(az));
         #endif
 
         #ifdef OUTPUT_READABLE_QUATERNION
