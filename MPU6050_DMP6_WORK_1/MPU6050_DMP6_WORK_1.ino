@@ -9,22 +9,15 @@
 MPU6050 mpu;
 
 //#define PLATE_1  // FIRST GYRO + BIG PLATE
-#define PLATE_2 // ACCURATE GYRO + Little plate
+//#define PLATE_2 // ACCURATE GYRO 
+#define PLATE_3 // LAST GYRO with #2 +  CONTROLLER
+
 
 //#define HELLO_WORLD
 //#define FAST_MODE
-   #ifdef PLATE_1
-      mpu.setXGyroOffset(58);
-      mpu.setYGyroOffset(-33);
-      mpu.setZGyroOffset(12);
-   // mpu.setXAccelOffset(-1224);
-  //  mpu.setYAccelOffset(-1095);
-  //  mpu.setZAccelOffset(2204);
-      mpu.setZAccelOffset(1334);
-  #endif
-#define FAST_MODE_ACCEL
+//#define FAST_MODE_ACCEL
 //#define TIMER_MODE
-//#define READ_MODE
+#define READ_MODE
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
 //#define OUTPUT_READABLE_YAWPITCHROLL
@@ -81,6 +74,7 @@ void setup() {
     devStatus = mpu.dmpInitialize();
  
    #ifdef PLATE_1
+      Serial.println("Plate 1");
       mpu.setXGyroOffset(58);
       mpu.setYGyroOffset(-33);
       mpu.setZGyroOffset(12);
@@ -90,15 +84,29 @@ void setup() {
       mpu.setZAccelOffset(1334);
   #endif
 //   -387 -3354 1645  14  -4  37
+
    #ifdef PLATE_2
+   
+      Serial.println("Plate 2");
       mpu.setXGyroOffset(14);
       mpu.setYGyroOffset(-4);
       mpu.setZGyroOffset(37);
-    mpu.setXAccelOffset(-387);
-    mpu.setYAccelOffset(-3354);
+      mpu.setXAccelOffset(-387);
+      mpu.setYAccelOffset(-3354);
       mpu.setZAccelOffset(1645);
   #endif
-
+  //1845  1501  247 71  -11 41
+//1956  1561  241 67  -9  49
+ #ifdef PLATE_3
+ 
+      Serial.println("Plate 3");
+      mpu.setXGyroOffset(71);
+      mpu.setYGyroOffset(-11);
+      mpu.setZGyroOffset(41);
+      mpu.setXAccelOffset(1845);
+      mpu.setYAccelOffset(1501);
+      mpu.setZAccelOffset(1400);
+  #endif
       // V2
   /*    mpu.setXGyroOffset(10);
     mpu.setYGyroOffset(-2);
@@ -214,9 +222,13 @@ void loop() {
            byte but = buttons[0]*128+buttons[1]*64+63;
            byte StopByte = 255;
            mpu.dmpGetAccel(&aa, fifoBuffer);
-             ax = aa.x;
-             ay = aa.y;
-             az = aa.z;
+            mpu.dmpGetGravity(&gravity, &q);
+            mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+            mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+          
+             ax = aaWorld.x;
+             ay = aaWorld.y;
+             az = aaWorld.z;
           byte bytearray[16] = {StopByte,but,lowByte(qx),highByte(qx),lowByte(qy),highByte(qy),lowByte(qz),highByte(qz),lowByte(qw),highByte(qw),lowByte(ax),highByte(ax),lowByte(ay),highByte(ay),lowByte(az),highByte(az)};
           Serial.write(bytearray,16);
         #endif
@@ -226,9 +238,13 @@ void loop() {
               mpu.dmpGetEuler(euler, &q);
               
                mpu.dmpGetAccel(&aa, fifoBuffer);
-             ax = aa.x;
-             ay = aa.y;
-             az = aa.z;
+           mpu.dmpGetAccel(&aa, fifoBuffer);
+            mpu.dmpGetGravity(&gravity, &q);
+            mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+            mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);          
+             ax = aaWorld.x;
+             ay = aaWorld.y;
+             az = aaWorld.z;
               Serial.println("Hello! "+String(euler[0] * 180/M_PI) + "," + String(euler[1] * 180/M_PI) + "," + String(euler[2] * 180/M_PI)+" ac ="+String(ax)+" "+String(ay)+" "+String(az));
         #endif
 
