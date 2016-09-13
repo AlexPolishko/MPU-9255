@@ -10,14 +10,14 @@ MPU6050 mpu;
 
 //#define PLATE_1  // FIRST GYRO + BIG PLATE
 //#define PLATE_2 // ACCURATE GYRO 
-#define PLATE_3 // LAST GYRO with #2 +  CONTROLLER
-
+//#define PLATE_3 // LAST GYRO with #2 +  CONTROLLER
+#define PLATE_4
 
 //#define HELLO_WORLD
 //#define FAST_MODE
-//#define FAST_MODE_ACCEL
+#define FAST_MODE_ACCEL
 //#define TIMER_MODE
-#define READ_MODE
+//#define READ_MODE
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
 //#define OUTPUT_READABLE_YAWPITCHROLL
@@ -27,11 +27,13 @@ MPU6050 mpu;
 bool blinkState = false;
 #define BUTTON1 11
 #define BUTTON2 12
+#define BUTTON3 10
 
 Bounce button1 = Bounce(BUTTON1,5); 
 Bounce button2 = Bounce(BUTTON2,5); 
+Bounce button3 = Bounce(BUTTON3,5); 
 
-int buttons[2];
+int buttons[3];
 #ifdef TIMER_MODE
   unsigned long timer1;
   byte buf[4];  
@@ -107,7 +109,24 @@ void setup() {
       mpu.setYAccelOffset(1501);
       mpu.setZAccelOffset(1400);
   #endif
+
+   #ifdef PLATE_4
+ 
+      Serial.println("Plate 4");
+      mpu.setXGyroOffset(17);
+      mpu.setYGyroOffset(-2);
+      mpu.setZGyroOffset(-30);
+      mpu.setXAccelOffset(-1790);
+      mpu.setYAccelOffset(240);
+      mpu.setZAccelOffset(1445);
+  #endif
+
       // V2
+      //-1753  72  1454  15  -1  -32
+//Your offsets:  -1789 240 1442  17  -3  -30
+//-1790  240 1445  17  -2  -30
+//-1659  261 1461  18  -2  -30
+
   /*    mpu.setXGyroOffset(10);
     mpu.setYGyroOffset(-2);
     mpu.setZGyroOffset(37);
@@ -122,7 +141,8 @@ void setup() {
 */
     pinMode(BUTTON1,INPUT);
     pinMode(BUTTON2,INPUT);
-   
+    pinMode(BUTTON3,INPUT);
+    
     if (devStatus == 0) {
         mpu.setDMPEnabled(true);
         attachInterrupt(0, dmpDataReady, RISING);
@@ -133,6 +153,8 @@ void setup() {
         Serial.println(F(")"));
     }
     pinMode(LED_PIN, OUTPUT);
+        pinMode(10, OUTPUT);
+
 }
 short qw,qx,qy,qz,ax,ay,az;
            
@@ -153,6 +175,13 @@ void loop() {
         buttons[1] = true;
       else
         buttons[1] = false;
+    }
+    
+    if ( button3.update() ) {
+      if ( button3.read() == HIGH)
+        buttons[2] = true;
+      else
+        buttons[2] = false;
     }
     
     mpuInterrupt = false;
@@ -219,7 +248,20 @@ void loop() {
            qx=qx*2;
            qy=qy*2;
            qz=qz*2;
-           byte but = buttons[0]*128+buttons[1]*64+63;
+           #ifdef PLATE_2
+           byte but = buttons[1]*128 +buttons[0]*64+buttons[2]*32+ 31;
+           #endif
+           #ifdef PLATE_1
+           byte but = buttons[1]*128 +buttons[0]*64+buttons[2]*32+ 31;
+           #endif
+           #ifdef PLATE_3
+           byte but = buttons[0]*128 +buttons[1]*64+buttons[2]*32+ 31;
+           #endif
+          #ifdef PLATE_4
+           byte but = buttons[1]*128 +buttons[0]*64+buttons[2]*32+ 31;
+           #endif
+
+
            byte StopByte = 255;
            mpu.dmpGetAccel(&aa, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
@@ -245,7 +287,7 @@ void loop() {
              ax = aaWorld.x;
              ay = aaWorld.y;
              az = aaWorld.z;
-              Serial.println("Hello! "+String(euler[0] * 180/M_PI) + "," + String(euler[1] * 180/M_PI) + "," + String(euler[2] * 180/M_PI)+" ac ="+String(ax)+" "+String(ay)+" "+String(az));
+              Serial.println("Hello! "+String(euler[0] * 180/M_PI) + "," + String(euler[1] * 180/M_PI) + "," + String(euler[2] * 180/M_PI)+" ac ="+String(ax)+" "+String(ay)+" "+String(az)+" B="+String(buttons[0])+String(buttons[1])+String(buttons[2]));
         #endif
 
         #ifdef OUTPUT_READABLE_QUATERNION
@@ -321,5 +363,6 @@ void loop() {
 
         blinkState = !blinkState;
         digitalWrite(LED_PIN, blinkState);
+        
     }
 }
